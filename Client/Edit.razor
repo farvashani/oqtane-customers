@@ -1,0 +1,200 @@
+@using Oqtane.Modules.Controls
+@using Tres.Customers.Services
+@using Tres.Customers.Models
+
+@namespace Tres.Customers.Modules
+@inherits ModuleBase
+@inject ICustomerService CustomerService
+@inject NavigationManager NavigationManager
+
+    <table class="table table-borderless">
+        <tr>
+            <td>
+                <label class="control-label">First Name: </label>
+            </td>
+            <td>
+                <input id="_name" class="form-control" @bind="@_firstName" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">Last Name: </label>
+            </td>
+            <td>
+                <input id="_lastName" class="form-control" @bind="@_lastName" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">Address1: </label>
+            </td>
+            <td>
+                <input id="_address1" class="form-control" @bind="@_address1" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">Address2: </label>
+            </td>
+            <td>
+                <input id="_address2" class="form-control" @bind="@_address2" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">City: </label>
+            </td>
+            <td>
+                <input id="_city" class="form-control" @bind="@_city" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">State: </label>
+            </td>
+            <td>
+                <input id="_usState" class="form-control" @bind="@_usState" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">Zip Code: </label>
+            </td>
+            <td>
+                <input id="_zipCode" class="form-control" @bind="@_zipCode" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">Phone: </label>
+            </td>
+            <td>
+                <input id="_phone" class="form-control" @bind="@_phone" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label class="control-label">Email: </label>
+            </td>
+            <td>
+                <input id="_email" class="form-control" @bind="@_email" />
+            </td>
+        </tr>
+    </table>
+
+
+<button type="button" class="btn btn-success" @onclick="Save">Save</button>
+<NavLink class="btn btn-secondary" href="@NavigateUrl()">Cancel</NavLink>
+<br />
+<br />
+@if (PageState.Action == "Edit")
+{
+    <AuditInfo CreatedBy="@_createdby" CreatedOn="@_createdon" ModifiedBy="@_modifiedby" ModifiedOn="@_modifiedon"></AuditInfo>
+}
+
+@code {
+    public override SecurityAccessLevel SecurityAccessLevel => SecurityAccessLevel.Edit;
+    public override string Actions => "Add,Edit";
+
+    int _id;
+    string _firstName;
+    string _lastName;
+    string _address1;
+    string _address2;
+    string _city;
+    string _usState;
+    string _zipCode;
+    string _email;
+    string _phone;
+
+    string _createdby;
+    DateTime _createdon;
+    string _modifiedby;
+    DateTime _modifiedon;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (PageState.Action == "Edit")
+            {
+                _id = Int32.Parse(PageState.QueryString["id"]);
+                Customer Customer = await CustomerService.GetCustomerAsync(_id);
+                if (Customer != null)
+                {
+                    _firstName = Customer.FirstName;
+                    _lastName = Customer.LastName;
+                    _address1 = Customer.Address1;
+                    _address2 = Customer.Address2;
+                    _city = Customer.City;
+                    _usState = Customer.UsState;
+                    _zipCode = Customer.ZipCode;
+                    _phone = Customer.Phone;
+                    _email = Customer.Email;
+
+                    _createdby = Customer.CreatedBy;
+                    _createdon = Customer.CreatedOn;
+                    _modifiedby = Customer.ModifiedBy;
+                    _modifiedon = Customer.ModifiedOn;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Loading Customer {CustomerId} {Error}", _id, ex.Message);
+            AddModuleMessage("Error Loading Customer", MessageType.Error);
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            if (PageState.Action == "Add")
+            {
+
+                if (string.IsNullOrEmpty(_firstName))
+                {
+                    AddModuleMessage("First Name is required", MessageType.Error);
+                    return;
+                }
+
+                Customer Customer = new Customer();
+                Customer.ModuleId = ModuleState.ModuleId;
+                Customer.FirstName = _firstName;
+                Customer.LastName = _lastName;
+                Customer.Address1 = _address1;
+                Customer.Address2 = _address2;
+                Customer.City = _city;
+                Customer.UsState = _usState;
+                Customer.ZipCode = _zipCode;
+                Customer.Phone = _phone;
+                Customer.Email = _email;
+
+                Customer = await CustomerService.AddCustomerAsync(Customer);
+                await logger.LogInformation("Customer Added {Customer}", Customer);
+            }
+            else
+            {
+                Customer Customer = await CustomerService.GetCustomerAsync(_id);
+                Customer.FirstName = _firstName;
+                Customer.LastName = _lastName;
+                Customer.Address1 = _address1;
+                Customer.Address2 = _address2;
+                Customer.City = _city;
+                Customer.UsState = _usState;
+                Customer.ZipCode = _zipCode;
+                Customer.Phone = _phone;
+                Customer.Email = _email;
+                await CustomerService.UpdateCustomerAsync(Customer);
+                await logger.LogInformation("Customer Updated {Customer}", Customer);
+            }
+            NavigationManager.NavigateTo(NavigateUrl());
+        }
+        catch (Exception ex)
+        {
+            await logger.LogError(ex, "Error Saving Customer {Error}", ex.Message);
+            AddModuleMessage("Error Saving Customer", MessageType.Error);
+        }
+    }
+}
