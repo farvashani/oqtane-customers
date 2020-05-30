@@ -4,6 +4,7 @@
 ## Contents
 * [Introduction](#introduction)
 * [Questions](#questions)
+* [Todos](#todos)
 
 ## Introduction
 
@@ -20,3 +21,8 @@ Any pull requests are welcome!
 
 ## Questions
 Feel free to open a new issue if you have any questions.
+
+
+## Todos
+* Add search capability
+* Add a "rolodex" control - [A,B,C,etc]
